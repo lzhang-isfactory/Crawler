@@ -12,16 +12,25 @@ public class ProductMain {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		System.out.println("begin");
 		String url = "http://sou.zhaopin.com/jobs/searchresult.ashx?jl=%E4%B8%8A%E6%B5%B7&sm=0&p=1";
 		List<String> list = new ArrayList<String>();
 		List<String> resultlist = new ArrayList<String>();
 		do {
-			String regx = "<td class=\"zwmc\"((?:.|\r|\n)*?)</tr>";
+			String regx = "<td class=\"zwmc\"[\\s\\S]*?</tr>";
 			String result = AccessMain.access(url);
 			list = PatternMain.patternlist(regx, result);
 			for (int i = 0; i < list.size(); i++) {
-				String gzurl = PatternMain.patternString("[a-zA-z]+://[^\\s]*", list.get(i));
-				gzurl = gzurl.replace("\n", "");
+				String gzurl = PatternMain.patternString("[a-zA-z]+://company[^\\s]*", list.get(i));
+				String gshy = null;
+				if (!gzurl.equals("")) {
+					gzurl = gzurl.replace("\n", "");
+					String[] gzurllist = gzurl.split("\"");
+					String companypage = AccessMain.access(gzurllist[0].replace("\n", gzurllist[0]));
+					gshy = PatternMain.patternString(">公司行业[\\s\\S]*?</tr>", companypage);
+					gshy = PatternMain.patternString("<span>.*</span>", gshy);
+					gshy = ReplaceMain.replacegshy(gshy);
+				}
 				String zwmc = PatternMain.patternString(">.*</a>\n", list.get(i));
 				zwmc = ReplaceMain.replacezwmc(zwmc);
 				zwmc = zwmc.replace("\n", "");
@@ -37,17 +46,18 @@ public class ProductMain {
 				String gxsj = PatternMain.patternString("<td class=\"gxsj\">.*</span>", list.get(i));
 				gxsj = PatternMain.patternString("[\u4e00-\u9fa5]{2,}|[1-9]\\d*-[1-9]\\d*", gxsj);
 				gxsj = gxsj.replace("\n", "");
-				resultlist.add(zwmc + "," + gsmc + "," + zwyx + "," + gzdd + "," + "," + gxsj + "," + gzurl);
+				resultlist.add(zwmc + "," + gsmc + "," + zwyx + "," + gzdd + "," + "," + gxsj + "," + gshy);
 			}
 			OutputMain.output(resultlist);
 			resultlist.clear();
 			url = null;
 			String nextPage = PatternMain.patternString("<li class=\"pagesDown-pos\">((?:.|\r|\n)*?)</li>", result);
 			url = PatternMain.patternString("[a-zA-z]+://[^\\s]*", nextPage);
-			url= url.replace("\"", "");
+			if (url != null)
+				url = url.replace("\"", "");
 			System.out.println(url);
-		} while (url != null);
-		
+		} while (url != null && !url.equals(""));
+
 		System.out.println("Finish Normal.");
 	}
 }

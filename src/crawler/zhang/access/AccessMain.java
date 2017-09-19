@@ -9,26 +9,33 @@ public class AccessMain {
 
 	public static String access(String url) {
 		BufferedReader in = null;
+		int retry = 0;
 		String result = "";
-		try {
-			URL realUrl = new URL(url);
-			URLConnection connection = realUrl.openConnection();
-			in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			String line;
-			while ((line = in.readLine()) != null) {
-				result += line + "\n";
-			}
-
-		} catch (Exception e) {
-			System.out.println("access is fail" + e);
-			e.printStackTrace();
-		} finally {
+		while (true) {
 			try {
-				if (in != null) {
-					in.close();
+				URL realUrl = new URL(url);
+				URLConnection connection = realUrl.openConnection();
+				in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+				String line;
+				while ((line = in.readLine()) != null) {
+					result += line + "\n";
 				}
-			} catch (Exception e2) {
-				e2.printStackTrace();
+				if (result != "")
+					break;
+
+			} catch (Exception e) {
+				if (retry > 3) {
+					throw new RuntimeException("異常終了" + url + e);
+				}
+				retry++;
+			} finally {
+				try {
+					if (in != null) {
+						in.close();
+					}
+				} catch (Exception e2) {
+					e2.printStackTrace();
+				}
 			}
 		}
 		return result;

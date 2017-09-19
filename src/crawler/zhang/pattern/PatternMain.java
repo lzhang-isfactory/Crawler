@@ -24,7 +24,8 @@ public class PatternMain {
 		while (matcher.find()) {
 			str += matcher.group(0);
 		}
-		return str;
+
+		return str.replace(",", "");
 	}
 
 }
